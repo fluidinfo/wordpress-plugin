@@ -36,6 +36,8 @@ License: MIT
  */
 
 
+// Include fluidinfo.php library
+require('includes/fluidinfo.php');
 // Set-up Hooks
 register_uninstall_hook(__FILE__, 'fi_delete_plugin_options');
 add_action('admin_init', 'fi_init' );
@@ -53,8 +55,8 @@ function fi_init() {
 
 // Add menu page
 function fi_admin_menu() {
-	add_options_page('Fluidinfo Options Page', 'Fluidinfo', 'manage_options', __FILE__, 'fi_options_render');
-	add_management_page('Fluidinfo Export', 'Fluidinfo Export', 'export', __FILE__, 'fi_export_render');
+	add_options_page('Fluidinfo Options Page', 'Fluidinfo', 'manage_options', 'fi-menu-options', 'fi_options_render');
+	add_management_page('Fluidinfo Export', 'Fluidinfo Export', 'export', 'fi-menu-management', 'fi_export_render');
 }
 
 // Render the Plugin options form
@@ -94,9 +96,9 @@ function fi_options_render() {
 			</tr>
 
 			<tr>
-				<th scope="row">Import server</th>
+				<th scope="row">Fluidinfo instance url</th>
 				<td>
-					<input type="text" size="57" name="fi_options[importserver]" value="<?php echo $options['importserver']; ?>" />
+					<input type="text" size="57" name="fi_options[instance]" value="<?php echo $options['instance']; ?>" />
 				</td>
 			</tr>
 
@@ -234,17 +236,53 @@ function fi_send_to_import_server($json_posts) {
 
 	$options = get_option('fi_options');
 
-	$json = '{"config":{';
-	$json .= '"username":"' . $options['username'] . '",';
-	$json .= '"password":"' . $options['password'] . '"';
-	$json .= '},"data":[';
-	$json .= implode(',', $json_posts);
-	$json .= ']}';
+	$fluidinfo = new Fluidinfo();
+	$fluidinfo->setPrefix($options['instance']);
+	$fluidinfo->setCredentials($options['username'], $options['password']);
 
-	echo 'Import URL: ' . $options['importserver'];
-	echo '<pre>';
-	print_r(($json));
-	// print_r(json_decode($json));
-	echo '</pre>';
+	$tc = new TimeCounter();
+	$tc->startCounter();
+	$count_posts = 0;
+	foreach ($json_posts as $post) {
+		$json = json_decode($post, true);
+		$about = $json['fluiddb/about'];
+		unset($json['fluiddb/about']);
+		$out = $fluidinfo->updateValues('fluiddb/about="' . $about . '"', $json);
+		$count_posts++;
+	}
+	$tc->stopCounter();
+	echo 'It tooks ' . $tc->getElapsedTime() . ' milliseconds to process the ' . $count_posts . ' posts.';
 }
 
+class TimeCounter
+{
+    var $startTime;
+    var $endTime;
+     
+    function TimeCounter()
+    {
+        $this->startTime=0;
+        $this->endTime=0;
+    }
+    function getTimestamp()
+    {
+        $timeofday = gettimeofday();
+        //RETRIEVE SECONDS AND MICROSECONDS (ONE MILLIONTH OF A SECOND)
+        //CONVERT MICROSECONDS TO SECONDS AND ADD TO RETRIEVED SECONDS
+        //MULTIPLY BY 1000 TO GET MILLISECONDS
+         return 1000*($timeofday['sec'] + ($timeofday['usec'] / 1000000));
+    }
+    function startCounter()
+    {
+        $this->startTime=$this->getTimestamp();
+    }
+    function stopCounter()
+    {
+        $this->endTime=$this->getTimestamp();
+    }
+    function getElapsedTime()
+    {
+        //RETURN DIFFERECE IN MILLISECONDS
+        return number_format(($this->endTime)-($this->startTime), 2);
+    }
+}
