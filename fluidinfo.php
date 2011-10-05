@@ -124,7 +124,7 @@ add_filter('plugin_action_links', 'fi_plugin_action_links', 10, 2);
 function fi_plugin_action_links($links, $file) {
 
 	if ( $file == plugin_basename( __FILE__ ) ) {
-		$fi_links = '<a href="'.get_admin_url().'options-general.php?page=fluidinfo-sync/fluidinfo-sync.php">'.__('Settings').'</a>';
+		$fi_links = '<a href="'.get_admin_url().'options-general.php?page=fi-menu-options">'.__('Settings').'</a>';
 		// make the 'Settings' link appear first
 		array_unshift( $links, $fi_links );
 	}
