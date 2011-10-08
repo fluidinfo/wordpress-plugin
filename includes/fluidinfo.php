@@ -555,7 +555,7 @@ class Fluidinfo
 
 		if ($infos['content_type'] == 'application/json'
 			OR $infos['content_type'] == 'application/vnd.fluiddb.value+json') {
-			$output = json_decode($output);
+			$output = json_decode($output, true);
 		}
 
 		return array($infos['http_code'], $output, $header);
