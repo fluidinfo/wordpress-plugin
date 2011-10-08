@@ -164,7 +164,9 @@ function fi_post_to_json($post) {
 
 	$data = array();
 
-	$data['fluiddb/about'] = $post->guid;
+	$permalink = get_permalink($post->ID);
+
+	$data['fluiddb/about'] = $permalink;
 	$data[$ns.'/text'] = strip_tags($post->post_content);
 	$data[$ns.'/html'] = $post->post_content;
 	$data[$ns.'/title'] = $post->post_title;
@@ -205,9 +207,85 @@ function fi_post_to_json($post) {
 		}
 	}
 
+	$DOM = new DOMDocument;
+	$DOM->loadHTML($post->post_content);
+
+	$anchors = $DOM->getElementsByTagName('a');
+
+	$urls = array();
+	$domains = array();
+	for ($i = 0; $i < $anchors->length; $i++) {
+	   $url = $anchors->item($i)->getAttribute('href');
+	   $domains[] = parse_url($url, PHP_URL_HOST);
+	   $urls[] = $url;
+	}
+
+	$data[$ns.'/urls'] = $urls;
+	$data[$ns.'/domains'] = $domains;
+
+	fi_tag_urls_domains($permalink, $urls, $domains);
+
 	$json = json_encode($data);
 
 	return $json;
+}
+
+$fi_mentions = null;
+function fi_tag_urls_domains($permalink, $urls, $domains) {
+	global $fi_mentions;
+
+	$options = get_option('fi_options');
+	$ns = $options['namespace'];
+
+	$fluidinfo = new Fluidinfo();
+	$fluidinfo->setPrefix($options['instance']);
+	$fluidinfo->setCredentials($options['username'], $options['password']);
+
+	if (!$fi_mentions) {
+		$result = $fluidinfo->getValues('has '.$ns.'/mentioned', array('fluiddb/about', $ns.'/mentioned'));
+
+		$mentioned = $result['results']['id'];
+
+		$fi_mentions = array();
+		foreach ($mentioned as $m) {
+			$fi_mentions[$m['fluiddb/about']['value']] = $m[$ns.'/mentioned']['value'];
+		}
+	}
+
+	foreach ($urls as $url) {
+		if (array_key_exists($url, $fi_mentions)) {
+			if (!in_array($permalink, $fi_mentions[$url])) {
+				$fi_mentions[$url][] = $permalink;
+				$mentioned = $fi_mentions[$url];
+			}
+			else {
+				continue;
+			}
+		}
+		else {
+			$mentioned = array($permalink);
+		}
+		$json = array($ns.'/mentioned' => $mentioned);
+		$out = $fluidinfo->updateValues('fluiddb/about="' . $url . '"', $json);
+	}
+
+	foreach ($domains as $domain) {
+		if (array_key_exists($domain, $fi_mentions)) {
+			if (!in_array($permalink, $fi_mentions[$domain])) {
+				$fi_mentions[$domain][] = $permalink;
+				$mentioned = $fi_mentions[$domain];
+			}
+			else {
+				continue;
+			}
+		}
+		else {
+			$mentioned = array($permalink);
+		}
+		$json = array($ns.'/mentioned' => $mentioned);
+		$out = $fluidinfo->updateValues('fluiddb/about="' . $domain . '"', $json);
+	}
+
 }
 
 function fi_send_to_import_server($json_posts) {
