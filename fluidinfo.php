@@ -38,9 +38,10 @@ License: MIT
 
 // Include fluidinfo.php library
 require('includes/fluidinfo.php');
+
 // Set-up Hooks
 register_uninstall_hook(__FILE__, 'fi_delete_plugin_options');
-add_action('admin_init', 'fi_init' );
+add_action('admin_init', 'fi_init');
 add_action('admin_menu', 'fi_admin_menu');
 
 // Delete options table entries ONLY when plugin deactivated AND deleted
@@ -61,82 +62,64 @@ function fi_admin_menu() {
 
 // Render the Plugin options form
 function fi_options_render() {
+	settings_fields('fi_plugin_options');
+	$options = get_option('fi_options');
 ?>
 <div class="wrap">
-
 	<div class="icon32" id="icon-options-general"><br></div>
 	<h2>Fluidinfo</h2>
 	<p>Fluidinfo configuration</p>
 
 	<form method="post" action="options.php">
-		<?php settings_fields('fi_plugin_options'); ?>
-		<?php $options = get_option('fi_options'); ?>
-
 		<table class="form-table">
-
 			<tr>
 				<th scope="row">Username</th>
-				<td>
-					<input type="text" size="57" name="fi_options[username]" value="<?php echo $options['username']; ?>" />
-				</td>
+				<td><input type="text" size="57" name="fi_options[username]" value="<?php echo $options['username']; ?>" /></td>
 			</tr>
-
 			<tr>
 				<th scope="row">Password</th>
-				<td>
-					<input type="password" size="57" name="fi_options[password]" value="<?php echo $options['password']; ?>" />
-				</td>
+				<td><input type="password" size="57" name="fi_options[password]" value="<?php echo $options['password']; ?>" /></td>
 			</tr>
-
 			<tr>
 				<th scope="row">Namespace</th>
-				<td>
-					<input type="text" size="57" name="fi_options[namespace]" value="<?php echo $options['namespace']; ?>" />
-				</td>
+				<td><input type="text" size="57" name="fi_options[namespace]" value="<?php echo $options['namespace']; ?>" /></td>
 			</tr>
-
 			<tr>
 				<th scope="row">Fluidinfo instance url</th>
-				<td>
-					<input type="text" size="57" name="fi_options[instance]" value="<?php echo $options['instance']; ?>" />
-				</td>
+				<td><input type="text" size="57" name="fi_options[instance]" value="<?php echo $options['instance']; ?>" /></td>
 			</tr>
-
 		</table>
 		<p class="submit">
 		<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
 		</p>
 	</form>
-
 </div>
 <?php
 }
 
 // Sanitize and validate input. Accepts an array, return a sanitized array.
 function fi_validate_options($input) {
-	$input['username'] =  wp_filter_nohtml_kses($input['username']);
-	$input['password'] =  wp_filter_nohtml_kses($input['password']);
+	$input['username'] = wp_filter_nohtml_kses($input['username']);
+	$input['password'] = wp_filter_nohtml_kses($input['password']);
+	$input['namespace'] = wp_filter_nohtml_kses($input['namespace']);
+	$input['instance'] = wp_filter_nohtml_kses($input['instance']);
 	return $input;
 }
 
 add_filter('plugin_action_links', 'fi_plugin_action_links', 10, 2);
 // Display a Settings link on the main Plugins page
 function fi_plugin_action_links($links, $file) {
-
-	if ( $file == plugin_basename( __FILE__ ) ) {
+	if ($file == plugin_basename(__FILE__)) {
 		$fi_links = '<a href="'.get_admin_url().'options-general.php?page=fi-menu-options">'.__('Settings').'</a>';
 		// make the 'Settings' link appear first
-		array_unshift( $links, $fi_links );
+		array_unshift($links, $fi_links);
 	}
-
 	return $links;
 }
 
 // Tools menu - Fluidinfo Export
 function fi_export_render() {
-
 	$hidden_field_name = 'fi_submit_hidden';
-
 ?>
 <div class="wrap">
 	<div class="icon32" id="icon-tools"><br></div>
@@ -154,7 +137,7 @@ function fi_export_render() {
 	}
 ?>
 
-	<p>You can here export all your posts. Blah blah blah.</p>
+	<p>You can here export all your posts.</p>
 
 	<form method="post" action="">
 		<input type="hidden" name="<?php echo $hidden_field_name; ?>" value="Y">
@@ -208,10 +191,6 @@ function fi_post_to_json($post) {
 	$data[$ns.'/modification-timestamp'] = (float) $modification; // TODO: Need to force float...
 	// "paparent/wordpress/modification-date": "June 10th 2011",
 
-	// Do we need that ??
-	// "paparent/wordpress/excerpt": "...",
-	// "paparent/wordpress/status": "published",
-
 	$post_cats = get_the_category($post->ID);
 	if ($post_cats) {
 		foreach ($post_cats as $cat) {
@@ -258,7 +237,7 @@ class TimeCounter
 {
     var $startTime;
     var $endTime;
-     
+
     function TimeCounter()
     {
         $this->startTime=0;
