@@ -220,10 +220,12 @@ function fi_post_to_json($post) {
 	   $urls[] = $url;
 	}
 
-	$data[$ns.'/urls'] = $urls;
-	$data[$ns.'/domains'] = $domains;
+	if ($domains) {
+		$data[$ns.'/urls'] = $urls;
+		$data[$ns.'/domains'] = $domains;
 
-	fi_tag_urls_domains($permalink, $urls, $domains);
+		fi_tag_urls_domains($permalink, $urls, $domains);
+	}
 
 	$json = json_encode($data);
 
