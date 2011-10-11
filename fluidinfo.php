@@ -43,6 +43,8 @@ require('includes/fluidinfo.php');
 register_uninstall_hook(__FILE__, 'fi_delete_plugin_options');
 add_action('admin_init', 'fi_init');
 add_action('admin_menu', 'fi_admin_menu');
+add_action('admin_head', 'fi_admin_jsapp');
+add_action('wp_ajax_fi_export', 'fi_ajax_export');
 
 // Delete options table entries ONLY when plugin deactivated AND deleted
 function fi_delete_plugin_options() {
@@ -128,33 +130,158 @@ function fi_export_render() {
 
 	if (isset($_POST[$hidden_field_name]) && $_POST[$hidden_field_name] == 'Y') {
 
-		$args = array('nopaging'=>true);
-		$posts = get_posts($args);
-
-		fi_export_posts($posts);
 
 		echo '<div id="message" class="updated below-h2"><p><strong>Posts exported.</strong></p></div>';
 	}
+
+	// Get all posts for grid
+	$args = array('nopaging'=>true);
+	$posts = get_posts($args);
+
 ?>
 
 	<p>You can here export all your posts.</p>
 
-	<form method="post" action="">
+	<form id="fi-export-form" method="post" action="">
 		<input type="hidden" name="<?php echo $hidden_field_name; ?>" value="Y">
+		<input type="checkbox" class="checkall"> All
+<table>
+<?php
+	foreach ($posts as $post) {
+		echo '<tr>';
+		echo '<td><input type="checkbox" name="postid-'.$post->ID.'"><a href="#" class="fi-export">Export this</a> '.$post->ID.'</td>';
+		echo '<td>' . $post->post_title . '</td>';
+		echo '<td>' . $post->post_date . '</td>';
+		echo '<td class="status"></td>';
+		echo '</tr>';
+	}
+?>
+</table>
 		<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Export all posts') ?>" /></p>
 	</form>
 </div>
 <?php
 }
 
-function fi_export_posts($posts) {
+// Javascript Application
+function fi_admin_jsapp() {
+?>
+<script>
+/*
+* jQuery.ajaxQueue - A queue for ajax requests
+*
+* (c) 2011 Corey Frang
+* Dual licensed under the MIT and GPL licenses.
+*
+* Requires jQuery 1.5+
+*/
+(function($) {
 
-	$json_posts = array();
-	foreach ($posts as $post) {
-		$json_posts[] = fi_post_to_json($post);
+// jQuery on an empty object, we are going to use this as our Queue
+var ajaxQueue = $({});
+
+$.ajaxQueue = function( ajaxOpts ) {
+    var jqXHR,
+        dfd = $.Deferred(),
+        promise = dfd.promise();
+
+    // queue our ajax request
+    ajaxQueue.queue( doRequest );
+
+    // add the abort method
+    promise.abort = function( statusText ) {
+
+        // proxy abort to the jqXHR if it is active
+        if ( jqXHR ) {
+            return jqXHR.abort( statusText );
+        }
+
+        // if there wasn't already a jqXHR we need to remove from queue
+        var queue = ajaxQueue.queue(),
+            index = $.inArray( doRequest, queue );
+
+        if ( index > -1 ) {
+            queue.splice( index, 1 );
+        }
+
+        // and then reject the deferred
+        dfd.rejectWith( ajaxOpts.context || ajaxOpts, [ promise, statusText, "" ] );
+        return promise;
+    };
+
+    // run the actual query
+    function doRequest( next ) {
+        jqXHR = $.ajax( ajaxOpts )
+            .then( next, next )
+            .done( dfd.resolve )
+            .fail( dfd.reject );
+    }
+
+    return promise;
+};
+
+})(jQuery);
+
+jQuery(document).ready(function($) {
+	function fi_update_status(response, $tr) {
+		$status = $tr.find("td.status");
+		$status.html(response);
 	}
 
-	fi_send_to_import_server($json_posts);
+	function fi_export(postid, $tr, cb) {
+
+		var data = {
+			action: 'fi_export',
+			postid: postid
+		};
+
+		$.ajaxQueue({url: ajaxurl, data: data, success:function(response){
+			cb(response, $tr);
+		}});
+	}
+
+	$('.fi-export').click(function() {
+		$this = $(this);
+		$tr = $this.parent("td").parent("tr");
+		$input = $tr.find('input[type="checkbox"]');
+		postid = $input.attr("name").replace(/postid-/, '');
+		fi_export(postid, $tr, fi_update_status);
+		return false;
+	});
+
+	$("#fi-export-form").submit(function(){
+		$this = $(this);
+		event.preventDefault();
+
+		$this.parent().parent().find('input[type="checkbox"]').each(function(){
+			if (this.checked && $(this).attr("class") != 'checkall') {
+				postid = $(this).attr("name").replace(/postid-/, '');
+				$tr = $(this).parent("td").parent("tr");
+				fi_update_status("pending", $tr);
+				fi_export(postid, $tr, fi_update_status);
+			}
+		});
+
+		return false;
+	});
+	$('.checkall').click(function () {
+		$(this).parent('form').find(':checkbox').attr('checked', this.checked);
+	});
+});
+</script>
+<?php
+}
+
+// Callback for Ajax export
+function fi_ajax_export() {
+	$post_id = $_GET['postid'];
+
+	$post = get_post($post_id);
+	$json = fi_post_to_json($post);
+
+	fi_send_to_import_server($json);
+
+	die;
 }
 
 function fi_post_to_json($post) {
