@@ -376,7 +376,7 @@ function fi_tag_urls_domains($permalink, $urls, $domains) {
 		$mentioned = $result['results']['id'];
 
 		$fi_mentions = array();
-		foreach ($mentioned as $m) {
+		if ($mentioned) foreach ($mentioned as $m) {
 			$fi_mentions[$m['fluiddb/about']['value']] = $m[$ns.'/mentioned']['value'];
 		}
 	}
