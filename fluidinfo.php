@@ -64,7 +64,6 @@ function fi_admin_menu() {
 
 // Render the Plugin options form
 function fi_options_render() {
-	settings_fields('fi_plugin_options');
 	$options = get_option('fi_options');
 ?>
 <div class="wrap">
@@ -73,6 +72,7 @@ function fi_options_render() {
 	<p>Fluidinfo configuration</p>
 
 	<form method="post" action="options.php">
+		<?php settings_fields('fi_plugin_options'); ?>
 		<table class="form-table">
 			<tr>
 				<th scope="row">Username</th>
