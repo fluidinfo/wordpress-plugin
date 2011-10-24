@@ -276,18 +276,26 @@ jQuery(document).ready(function($) {
 function fi_ajax_export() {
 	$post_id = $_GET['postid'];
 
-	$post = get_post($post_id);
-	$json = fi_post_to_json($post);
+	$tc = new TimeCounter();
+	$tc->startCounter();
 
-	fi_send_to_import_server($json);
+	$post = get_post($post_id);
+	fi_export_post($post);
+
+	$tc->stopCounter();
+	echo 'It tooks ' . $tc->getElapsedTime() . ' milliseconds to process.';
 
 	die;
 }
 
-function fi_post_to_json($post) {
+function fi_export_post($post) {
 
 	$options = get_option('fi_options');
 	$ns = $options['namespace'];
+
+	$fluidinfo = new Fluidinfo();
+	$fluidinfo->setPrefix($options['instance']);
+	$fluidinfo->setCredentials($options['username'], $options['password']);
 
 	$data = array();
 
@@ -354,9 +362,10 @@ function fi_post_to_json($post) {
 		fi_tag_urls_domains($permalink, $urls, $domains);
 	}
 
-	$json = json_encode($data);
+	$about = $data['fluiddb/about'];
+	unset($data['fluiddb/about']);
 
-	return $json;
+	$out = $fluidinfo->updateValues('fluiddb/about="' . $about . '"', $data);
 }
 
 $fi_mentions = null;
@@ -415,29 +424,6 @@ function fi_tag_urls_domains($permalink, $urls, $domains) {
 		$out = $fluidinfo->updateValues('fluiddb/about="' . $domain . '"', $json);
 	}
 
-}
-
-function fi_send_to_import_server($json_posts) {
-	if (!is_array($json_posts)) $json_posts = array($json_posts);
-
-	$options = get_option('fi_options');
-
-	$fluidinfo = new Fluidinfo();
-	$fluidinfo->setPrefix($options['instance']);
-	$fluidinfo->setCredentials($options['username'], $options['password']);
-
-	$tc = new TimeCounter();
-	$tc->startCounter();
-	$count_posts = 0;
-	foreach ($json_posts as $post) {
-		$json = json_decode($post, true);
-		$about = $json['fluiddb/about'];
-		unset($json['fluiddb/about']);
-		$out = $fluidinfo->updateValues('fluiddb/about="' . $about . '"', $json);
-		$count_posts++;
-	}
-	$tc->stopCounter();
-	echo 'It tooks ' . $tc->getElapsedTime() . ' milliseconds to process the ' . $count_posts . ' posts.';
 }
 
 class TimeCounter
