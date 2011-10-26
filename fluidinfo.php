@@ -123,14 +123,16 @@ function fi_plugin_action_links($links, $file) {
 function fi_export_render() {
 	$hidden_field_name = 'fi_submit_hidden';
 ?>
+<style>
+td.status .fail{background-color:#800;color:#ddd;padding:2px;}
+td.status .ok{background-color:#080;color:#ddd;padding:2px;}
+</style>
 <div class="wrap">
 	<div class="icon32" id="icon-tools"><br></div>
 	<h2>Fluidinfo export</h2>
 <?php
 
 	if (isset($_POST[$hidden_field_name]) && $_POST[$hidden_field_name] == 'Y') {
-
-
 		echo '<div id="message" class="updated below-h2"><p><strong>Posts exported.</strong></p></div>';
 	}
 
@@ -144,8 +146,8 @@ function fi_export_render() {
 
 	<form id="fi-export-form" method="post" action="">
 		<input type="hidden" name="<?php echo $hidden_field_name; ?>" value="Y">
-		<input type="checkbox" class="checkall"> All
 <table>
+<tr><td colspan="4"><input type="checkbox" class="checkall"> All</td></tr>
 <?php
 	foreach ($posts as $post) {
 		echo '<tr>';
@@ -223,9 +225,9 @@ $.ajaxQueue = function( ajaxOpts ) {
 })(jQuery);
 
 jQuery(document).ready(function($) {
-	function fi_update_status(response, $tr) {
+	function fi_update_status(text, successcls, $tr) {
 		$status = $tr.find("td.status");
-		$status.html(response);
+		$status.html('<span class="'+successcls+'">' + text + '</span>');
 	}
 
 	function fi_export(postid, $tr, cb) {
@@ -236,7 +238,13 @@ jQuery(document).ready(function($) {
 		};
 
 		$.ajaxQueue({url: ajaxurl, data: data, success:function(response){
-			cb(response, $tr);
+			console.log(response);
+			if (response.success) {
+				cb("Done in " + response.time + "ms", 'ok', $tr);
+			}
+			else {
+				cb("An error occured", 'fail', $tr);
+			}
 		}});
 	}
 
@@ -274,16 +282,23 @@ jQuery(document).ready(function($) {
 
 // Callback for Ajax export
 function fi_ajax_export() {
-	$post_id = $_GET['postid'];
+	header('Content-type: application/json');
 
-	$tc = new TimeCounter();
-	$tc->startCounter();
+	try {
+		$post_id = $_GET['postid'];
 
-	$post = get_post($post_id);
-	fi_export_post($post);
+		$tc = new TimeCounter();
+		$tc->startCounter();
 
-	$tc->stopCounter();
-	echo 'It tooks ' . $tc->getElapsedTime() . ' milliseconds to process.';
+		$post = get_post($post_id);
+		fi_export_post($post);
+
+		$tc->stopCounter();
+		echo json_encode(array('success'=>True,'time'=>$tc->getElapsedTime()));
+	}
+	catch (Exception $e) {
+		echo json_encode(array('success'=>False));
+	}
 
 	die;
 }
