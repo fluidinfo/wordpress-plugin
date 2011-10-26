@@ -124,8 +124,12 @@ function fi_export_render() {
 	$hidden_field_name = 'fi_submit_hidden';
 ?>
 <style>
-td.status .fail{background-color:#800;color:#ddd;padding:2px;}
-td.status .ok{background-color:#080;color:#ddd;padding:2px;}
+.fiexportlist td{padding:2px;}
+.fiexportlist td.status .fail{background-color:#800;color:#ddd;padding:2px;}
+.fiexportlist td.status .ok{background-color:#080;color:#ddd;padding:2px;}
+
+.striperows tr.alt{background:#eee;}
+.striperows tr.over{background:#ccc;}
 </style>
 <div class="wrap">
 	<div class="icon32" id="icon-tools"><br></div>
@@ -146,8 +150,8 @@ td.status .ok{background-color:#080;color:#ddd;padding:2px;}
 
 	<form id="fi-export-form" method="post" action="">
 		<input type="hidden" name="<?php echo $hidden_field_name; ?>" value="Y">
-<table>
-<tr><td colspan="4"><input type="checkbox" class="checkall"> All</td></tr>
+<table class="fiexportlist striperows">
+<tr><td colspan="4"><input type="checkbox" class="checkall"> Select all posts</td></tr>
 <?php
 	foreach ($posts as $post) {
 		echo '<tr>';
@@ -275,6 +279,8 @@ jQuery(document).ready(function($) {
 	$('.checkall').click(function () {
 		$(this).parent('form').find(':checkbox').attr('checked', this.checked);
 	});
+	$('.striperows tr:even').addClass("alt");
+	$('.striperows tr').hover(function(){$(this).addClass("over");},function(){$(this).removeClass("over");});
 });
 </script>
 <?php
