@@ -103,8 +103,8 @@ function fi_options_render() {
 function fi_validate_options($input) {
 	$input['username'] = wp_filter_nohtml_kses($input['username']);
 	$input['password'] = wp_filter_nohtml_kses($input['password']);
-	$input['namespace'] = wp_filter_nohtml_kses($input['namespace']);
-	$input['instance'] = wp_filter_nohtml_kses($input['instance']);
+	$input['namespace'] = rtrim(wp_filter_nohtml_kses($input['namespace']), '/');
+	$input['instance'] = rtrim(wp_filter_nohtml_kses($input['instance']), '/');
 	return $input;
 }
 
