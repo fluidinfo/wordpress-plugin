@@ -146,16 +146,18 @@ function fi_export_render() {
 
 ?>
 
-	<p>You can here export all your posts.</p>
+	<p>Below you can select posts to export into Fluidinfo. Either select a set of posts
+           and click &quot;Export selected posts&quot; below, or click on the &quot;Export now&quot;
+           link next to an individual post to export it immediately.</p>
 
 	<form id="fi-export-form" method="post" action="">
 		<input type="hidden" name="<?php echo $hidden_field_name; ?>" value="Y">
 <table class="fiexportlist striperows">
-<tr><td colspan="4"><input type="checkbox" class="checkall"> Select all posts</td></tr>
+<tr><td colspan="4"><input type="checkbox" class="checkall"> Select all</td></tr>
 <?php
 	foreach ($posts as $post) {
 		echo '<tr>';
-		echo '<td><input type="checkbox" name="postid-'.$post->ID.'"><a href="#" class="fi-export">Export this</a> '.$post->ID.'</td>';
+		echo '<td><input type="checkbox" name="postid-'.$post->ID.'"><a href="#" class="fi-export">Export now</a></td>';
 		echo '<td>' . $post->post_title . '</td>';
 		echo '<td>' . $post->post_date . '</td>';
 		echo '<td class="status"></td>';
@@ -163,7 +165,7 @@ function fi_export_render() {
 	}
 ?>
 </table>
-		<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Export all posts') ?>" /></p>
+		<p class="submit"><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Export selected posts') ?>" /></p>
 	</form>
 </div>
 <?php
@@ -244,7 +246,7 @@ jQuery(document).ready(function($) {
 		$.ajaxQueue({url: ajaxurl, data: data, success:function(response){
 			console.log(response);
 			if (response.success) {
-				cb("Done in " + response.time + "ms", 'ok', $tr);
+				cb("Exported in " + response.time + "ms", 'ok', $tr);
 			}
 			else {
 				cb("An error occured", 'fail', $tr);
