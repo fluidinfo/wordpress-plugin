@@ -279,7 +279,7 @@ jQuery(document).ready(function($) {
 		return false;
 	});
 	$('.checkall').click(function () {
-		$(this).parent('form').find(':checkbox').attr('checked', this.checked);
+		$('#fi-export-form').find(':checkbox').attr('checked', this.checked);
 	});
 	$('.striperows tr:even').addClass("alt");
 	$('.striperows tr').hover(function(){$(this).addClass("over");},function(){$(this).removeClass("over");});
