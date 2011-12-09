@@ -400,6 +400,7 @@ function fi_export_post($post) {
 	$domains = array();
 	for ($i = 0; $i < $anchors->length; $i++) {
 	   $url = $anchors->item($i)->getAttribute('href');
+	   // Starts with https?:// (Didn't use Regexp for performance)
 	   if (strpos($url, 'http://') === 0 OR strpos($url, 'https://') === 0) {
 		   $domain = parse_url($url, PHP_URL_HOST);
 		   if (!in_array($domain, $domains)) {
