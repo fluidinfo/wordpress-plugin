@@ -400,8 +400,15 @@ function fi_export_post($post) {
 	$domains = array();
 	for ($i = 0; $i < $anchors->length; $i++) {
 	   $url = $anchors->item($i)->getAttribute('href');
-	   $domains[] = parse_url($url, PHP_URL_HOST);
-	   $urls[] = $url;
+	   if (strpos($url, 'http://') === 0 OR strpos($url, 'https://') === 0) {
+		   $domain = parse_url($url, PHP_URL_HOST);
+		   if (!in_array($domain, $domains)) {
+			   $domains[] = $domain;
+		   }
+		   if (!in_array($url, $urls)) {
+			   $urls[] = $url;
+		   }
+	   }
 	}
 
 	if ($domains) {
