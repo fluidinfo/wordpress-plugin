@@ -56,6 +56,16 @@ function fi_init() {
 	register_setting('fi_plugin_options', 'fi_options', 'fi_validate_options');
 }
 
+function fi_getfluidinfo() {
+	$options = get_option('fi_options');
+
+	$fluidinfo = new Fluidinfo();
+	$fluidinfo->setPrefix($options['instance']);
+	$fluidinfo->setCredentials($options['username'], $options['password']);
+
+	return $fluidinfo;
+}
+
 // Add menu page
 function fi_admin_menu() {
 	add_options_page('Fluidinfo Options Page', 'Fluidinfo', 'manage_options', 'fi-menu-options', 'fi_options_render');
@@ -121,6 +131,7 @@ function fi_plugin_action_links($links, $file) {
 
 // Tools menu - Fluidinfo Export
 function fi_export_render() {
+	$options = get_option('fi_options');
 	$hidden_field_name = 'fi_submit_hidden';
 ?>
 <style>
@@ -144,6 +155,16 @@ function fi_export_render() {
 	$args = array('nopaging'=>true);
 	$posts = get_posts($args);
 
+	// Fetch all exported posts
+	$fluidinfo = fi_getfluidinfo();
+
+	$exported_posts_urls = array();
+	$out = $fluidinfo->getValues('has ' . $options['namespace'] . '/title', 'fluiddb/about');
+	$out = $out['results']['id'];
+	if ($out) foreach ($out as $id => $entry) {
+		$exported_posts_urls[] = $entry['fluiddb/about']['value'];
+	}
+
 ?>
 
 	<p>Below you can select posts to export into Fluidinfo. Either select a set of posts
@@ -156,11 +177,16 @@ function fi_export_render() {
 <tr><td colspan="4"><input type="checkbox" class="checkall"> Select all</td></tr>
 <?php
 	foreach ($posts as $post) {
+		$permalink = get_permalink($post->ID);
 		echo '<tr>';
 		echo '<td><input type="checkbox" name="postid-'.$post->ID.'"><a href="#" class="fi-export">Export now</a></td>';
 		echo '<td>' . $post->post_title . '</td>';
 		echo '<td>' . $post->post_date . '</td>';
-		echo '<td class="status"></td>';
+		echo '<td class="status">';
+		if (in_array($permalink, $exported_posts_urls)) {
+			echo '<span class="ok">Already exported</span>';
+		}
+		echo '</td>';
 		echo '</tr>';
 	}
 ?>
@@ -316,9 +342,7 @@ function fi_export_post($post) {
 	$options = get_option('fi_options');
 	$ns = $options['namespace'];
 
-	$fluidinfo = new Fluidinfo();
-	$fluidinfo->setPrefix($options['instance']);
-	$fluidinfo->setCredentials($options['username'], $options['password']);
+	$fluidinfo = fi_getfluidinfo();
 
 	$data = array();
 
@@ -403,9 +427,7 @@ function fi_tag_urls_domains($permalink, $urls, $domains) {
 	$options = get_option('fi_options');
 	$ns = $options['namespace'];
 
-	$fluidinfo = new Fluidinfo();
-	$fluidinfo->setPrefix($options['instance']);
-	$fluidinfo->setCredentials($options['username'], $options['password']);
+	$fluidinfo = fi_getfluidinfo();
 
 	if (!$fi_mentions) {
 		$result = $fluidinfo->getValues('has '.$ns.'/mentioned', array('fluiddb/about', $ns.'/mentioned'));
