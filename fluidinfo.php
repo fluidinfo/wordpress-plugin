@@ -354,6 +354,7 @@ function fi_export_post($post) {
 	$post_cats = get_the_category($post->ID);
 	if ($post_cats) {
 		foreach ($post_cats as $cat) {
+			$cat->slug = str_replace(' ', '-', $cat->slug);
 			$data[$ns.'/categories/'.$cat->slug] = null;
 		}
 	}
@@ -361,6 +362,7 @@ function fi_export_post($post) {
 	$post_tags = get_the_tags($post->ID);
 	if ($post_tags) {
 		foreach ($post_tags as $tag) {
+			$tag->name = str_replace(' ', '-', $tag->name);
 			$data[$ns.'/tags/'.$tag->name] = null;
 		}
 	}
