@@ -249,7 +249,7 @@ jQuery(document).ready(function($) {
 				cb("Exported in " + response.time + "ms", 'ok', $tr);
 			}
 			else {
-				cb("An error occured", 'fail', $tr);
+				cb("An error occured: " + response.msg, 'fail', $tr);
 			}
 		}});
 	}
@@ -305,7 +305,7 @@ function fi_ajax_export() {
 		echo json_encode(array('success'=>True,'time'=>$tc->getElapsedTime()));
 	}
 	catch (Exception $e) {
-		echo json_encode(array('success'=>False));
+		echo json_encode(array('success'=>False,'msg'=>$e->getMessage()));
 	}
 
 	die;
@@ -389,6 +389,9 @@ function fi_export_post($post) {
 	unset($data['fluiddb/about']);
 
 	$out = $fluidinfo->updateValues('fluiddb/about="' . $about . '"', $data);
+	if (is_array($out)) {
+		throw new Exception('Fluidinfo status code: ' . $out[0]);
+	}
 }
 
 $fi_mentions = null;
