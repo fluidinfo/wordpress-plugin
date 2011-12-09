@@ -56,6 +56,16 @@ function fi_init() {
 	register_setting('fi_plugin_options', 'fi_options', 'fi_validate_options');
 }
 
+function fi_getfluidinfo() {
+	$options = get_option('fi_options');
+
+	$fluidinfo = new Fluidinfo();
+	$fluidinfo->setPrefix($options['instance']);
+	$fluidinfo->setCredentials($options['username'], $options['password']);
+
+	return $fluidinfo;
+}
+
 // Add menu page
 function fi_admin_menu() {
 	add_options_page('Fluidinfo Options Page', 'Fluidinfo', 'manage_options', 'fi-menu-options', 'fi_options_render');
@@ -316,9 +326,7 @@ function fi_export_post($post) {
 	$options = get_option('fi_options');
 	$ns = $options['namespace'];
 
-	$fluidinfo = new Fluidinfo();
-	$fluidinfo->setPrefix($options['instance']);
-	$fluidinfo->setCredentials($options['username'], $options['password']);
+	$fluidinfo = fi_getfluidinfo();
 
 	$data = array();
 
@@ -403,9 +411,7 @@ function fi_tag_urls_domains($permalink, $urls, $domains) {
 	$options = get_option('fi_options');
 	$ns = $options['namespace'];
 
-	$fluidinfo = new Fluidinfo();
-	$fluidinfo->setPrefix($options['instance']);
-	$fluidinfo->setCredentials($options['username'], $options['password']);
+	$fluidinfo = fi_getfluidinfo();
 
 	if (!$fi_mentions) {
 		$result = $fluidinfo->getValues('has '.$ns.'/mentioned', array('fluiddb/about', $ns.'/mentioned'));
