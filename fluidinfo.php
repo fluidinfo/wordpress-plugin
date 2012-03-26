@@ -45,6 +45,7 @@ add_action('admin_init', 'fi_init');
 add_action('admin_menu', 'fi_admin_menu');
 add_action('admin_head', 'fi_admin_jsapp');
 add_action('wp_ajax_fi_export', 'fi_ajax_export');
+add_action('publish_post', 'fi_publish_post');
 
 // Delete options table entries ONLY when plugin deactivated AND deleted
 function fi_delete_plugin_options() {
@@ -99,6 +100,10 @@ function fi_options_render() {
 			<tr>
 				<th scope="row">Fluidinfo instance url</th>
 				<td><input type="text" size="57" name="fi_options[instance]" value="<?php echo $options['instance']; ?>" /></td>
+			</tr>
+			<tr>
+				<th scope="row">Automaticly export new post</th>
+				<td><input type="checkbox" name="fi_options[exportnewpost]" value="1"<?php checked(1 == $options['exportnewpost']); ?> /></td>
 			</tr>
 		</table>
 		<p class="submit">
@@ -335,6 +340,16 @@ function fi_ajax_export() {
 	}
 
 	die;
+}
+
+function fi_publish_post($post_id) {
+	$options = get_option('fi_options');
+	if ($options['exportnewpost']) {
+		$post = get_post($post_id);
+		fi_export_post($post);
+	}
+
+	return $post_id;
 }
 
 function fi_export_post($post) {
