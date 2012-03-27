@@ -105,6 +105,10 @@ function fi_options_render() {
 				<th scope="row">Automaticly export new post</th>
 				<td><input type="checkbox" name="fi_options[exportnewpost]" value="1"<?php checked(1 == $options['exportnewpost']); ?> /></td>
 			</tr>
+			<tr>
+				<th scope="row">Send post body</th>
+				<td><input type="checkbox" name="fi_options[sendbody]" value="1"<?php checked(1 == $options['sendbody']); ?> /></td>
+			</tr>
 		</table>
 		<p class="submit">
 		<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
@@ -364,8 +368,10 @@ function fi_export_post($post) {
 	$permalink = get_permalink($post->ID);
 
 	$data['fluiddb/about'] = $permalink;
-	$data[$ns.'/text'] = strip_tags($post->post_content);
-	$data[$ns.'/html'] = $post->post_content;
+	if ($options['sendbody']) {
+		$data[$ns.'/text'] = strip_tags($post->post_content);
+		$data[$ns.'/html'] = $post->post_content;
+	}
 	$data[$ns.'/title'] = $post->post_title;
 
 	// Can posts have more that one author?
